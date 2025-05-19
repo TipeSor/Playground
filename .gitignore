@@ -1,0 +1,43 @@
+# Build directories
+bin/
+obj/
+out/
+
+# IDE-specific folders
+.vs/
+.vscode/
+.idea/
+
+# User-specific IDE files
+*.user
+*.suo
+
+# OS junk
+.DS_Store
+Thumbs.db
+*~
+
+# Log & temp
+*.log
+*.tmp
+*.bak
+
+# Test results
+TestResults/
+
+# Package artifacts
+*.nupkg
+*.snupkg
+
+# Dotnet stuff
+project.lock.json
+project.assets.json
+*.nuget.props
+*.nuget.targets
+
+# Optional environment configs
+.env
+.env.*
+
+# JetBrains Rider stuff
+.idea/
