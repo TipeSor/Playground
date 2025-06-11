@@ -1,11 +1,11 @@
 using System.Numerics;
 using System.Text;
-#pragma warning disable IDE0011
+#pragma warning disable IDE0011, IDE0330
 namespace Playground.Drawing
 {
     public class ColorDisplay
     {
-        private readonly Lock _lock = new();
+        private readonly object _lock = new();
 
         public Color[] Buffer { get; private set; }
         public float[] ZBuffer { get; private set; }
@@ -106,20 +106,12 @@ namespace Playground.Drawing
             Console.SetCursorPosition(0, 0);
         }
 
-        public void Clear()
+        public void Clear(Color? color = null)
         {
             lock (_lock)
             {
-                Array.Fill(Buffer, new(0, 0, 0));
+                Array.Fill(Buffer, color ?? new(0, 0, 0));
                 Array.Fill(ZBuffer, float.MinValue);
-            }
-        }
-
-        public void Fill(Color color)
-        {
-            lock (_lock)
-            {
-                Array.Fill(Buffer, color);
             }
         }
 

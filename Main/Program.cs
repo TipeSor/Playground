@@ -5,7 +5,7 @@ namespace Playground
 {
     public class Program
     {
-        public static Project Active { get; internal set; } = new Drawing.Projects.ColorRing();
+        public static Project Active { get; internal set; } = new ConsoleGame.Projects.TestGame();
 
         public static void Main(string[] args)
         {
