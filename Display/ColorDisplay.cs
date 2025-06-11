@@ -5,7 +5,7 @@ namespace Playground.Drawing
 {
     public class ColorDisplay
     {
-        private static readonly Lock s_lock = new();
+        private readonly Lock _lock = new();
 
         public Color[] Buffer { get; private set; }
         public float[] ZBuffer { get; private set; }
@@ -23,21 +23,24 @@ namespace Playground.Drawing
 
         public ColorDisplay(Vector2 size, Vector2 position)
         {
-            Size = size;
-            Position = position;
+            lock (_lock)
+            {
+                Size = size;
+                Position = position;
 
-            Buffer = new Color[Width * Height];
-            Array.Fill(Buffer, new(0, 0, 0));
+                Buffer = new Color[Width * Height];
+                Array.Fill(Buffer, new(0, 0, 0));
 
-            ZBuffer = new float[Width * Height];
-            Array.Fill(ZBuffer, float.MinValue);
+                ZBuffer = new float[Width * Height];
+                Array.Fill(ZBuffer, float.MinValue);
 
-            Console.CursorVisible = false;
+                Console.CursorVisible = false;
+            }
         }
 
         public void Flush()
         {
-            lock (s_lock)
+            lock (_lock)
             {
                 StringBuilder sb = new();
 
@@ -97,16 +100,22 @@ namespace Playground.Drawing
 
         public void Clear()
         {
-            Buffer = new Color[Width * Height];
-            Array.Fill(Buffer, new(0, 0, 0));
+            lock (_lock)
+            {
+                Buffer = new Color[Width * Height];
+                Array.Fill(Buffer, new(0, 0, 0));
 
-            ZBuffer = new float[Width * Height];
-            Array.Fill(ZBuffer, float.MinValue);
+                ZBuffer = new float[Width * Height];
+                Array.Fill(ZBuffer, float.MinValue);
+            }
         }
 
         public void Fill(Color color)
         {
-            Array.Fill(Buffer, color);
+            lock (_lock)
+            {
+                Array.Fill(Buffer, color);
+            }
         }
 
         public void SetPixel(int x, int y, byte r, byte g, byte b, float depth)
@@ -116,7 +125,7 @@ namespace Playground.Drawing
 
         public void SetPixel(int x, int y, Color color, float depth)
         {
-            lock (s_lock)
+            lock (_lock)
             {
                 if (x < 0 || x >= Width || y < 0 || y >= Height) return;
                 int index = (y * Width) + x;
@@ -126,7 +135,7 @@ namespace Playground.Drawing
 
         public void SetPixel(int index, Color color, float depth)
         {
-            lock (s_lock)
+            lock (_lock)
             {
                 if (index < 0 || index >= Height * Width) return;
                 if (ZBuffer[index] >= depth) return;
