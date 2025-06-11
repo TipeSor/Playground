@@ -1,7 +1,7 @@
 #pragma warning disable IDE0011
 using System.Text;
 
-namespace Playground.Display
+namespace Playground.Drawing
 {
     public static class ColorScreen
     {
@@ -67,14 +67,14 @@ namespace Playground.Display
 
         public static void SetPixel(int x, int y, Color color, float depth)
         {
-            int index = (y * Width) + x;
             if (x < 0 || x >= Width || y < 0 || y >= Height) return;
+            int index = (y * Width) + x;
             SetPixel(index, color, depth);
         }
 
         public static void SetPixel(int index, Color color, float depth)
         {
-            if (index < 0 && index >= Height * Width) return;
+            if (index < 0 || index >= Height * Width) return;
             if (ZBuffer[index] >= depth) return;
             Buffer[index] = color;
             ZBuffer[index] = depth;
@@ -105,6 +105,11 @@ namespace Playground.Display
 
             StringBuilder sb = new();
 
+            Color color_t = new(0, 0, 0);
+            Color color_b = new(0, 0, 0);
+
+            sb = sb.Append("\x1b[38;2;0;0;0m\x1b[48;2;0;0;0m");
+
             for (int y = 0; y < Height / 2; y++)
             {
                 for (int x = 0; x < Width; x++)
@@ -115,11 +120,25 @@ namespace Playground.Display
                     Color top = localBuffer[index_t];
                     Color btm = localBuffer[index_b];
 
-                    sb = sb.Append("\x1b[38;2;")
-                        .Append(top.R).Append(';').Append(top.G).Append(';').Append(top.B)
-                        .Append("m\x1b[48;2;")
-                        .Append(btm.R).Append(';').Append(btm.G).Append(';').Append(btm.B)
-                        .Append("m▀");
+                    if (color_t != top)
+                    {
+                        sb = sb.Append("\x1b[38;2;")
+                            .Append(top.R).Append(';')
+                            .Append(top.G).Append(';')
+                            .Append(top.B).Append('m');
+                        color_t = top;
+                    }
+
+                    if (color_b != btm)
+                    {
+                        sb = sb.Append("m\x1b[48;2;")
+                            .Append(btm.R).Append(';')
+                            .Append(btm.G).Append(';')
+                            .Append(btm.B).Append('m');
+                        color_b = btm;
+                    }
+
+                    sb = sb.Append('▀');
                 }
             }
 
@@ -129,12 +148,5 @@ namespace Playground.Display
             Console.Write(sb.ToString());
             Console.SetCursorPosition(0, 0);
         }
-    }
-
-    public readonly struct Color(byte r, byte g, byte b)
-    {
-        public byte R { get; } = r;
-        public byte G { get; } = g;
-        public byte B { get; } = b;
     }
 }
