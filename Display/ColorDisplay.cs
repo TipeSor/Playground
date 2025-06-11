@@ -40,72 +40,77 @@ namespace Playground.Drawing
 
         public void Flush()
         {
+            Color[] buffer;
+            int width, height;
+            Vector2 position;
+
             lock (_lock)
             {
-                StringBuilder sb = new();
+                buffer = (Color[])Buffer.Clone();
+                width = Width;
+                height = Height;
+                position = Position;
+            }
 
-                int renderWidth = Math.Min(Width, Console.WindowWidth - (int)Position.X);
-                int renderHeight = Math.Min(Height, Console.WindowHeight - (int)Position.Y);
+            StringBuilder sb = new();
 
-                int rows = (renderHeight + 1) / 2;
+            int renderWidth = Math.Min(width, Console.WindowWidth - (int)position.X);
+            int renderHeight = Math.Min(height, Console.WindowHeight - (int)position.Y);
 
-                for (int y = 0; y < rows; y++)
+            int rows = (renderHeight + 1) / 2;
+
+            for (int y = 0; y < rows; y++)
+            {
+                sb = sb.Clear();
+
+                Color color_t = new(0, 0, 0);
+                Color color_b = new(0, 0, 0);
+
+                sb = sb.Append("\x1b[38;2;0;0;0m\x1b[48;2;0;0;0m");
+
+                for (int x = 0; x < renderWidth; x++)
                 {
-                    sb = sb.Clear();
+                    int index_t = (2 * y * width) + x;
+                    int index_b = index_t + width;
 
-                    Color color_t = new(0, 0, 0);
-                    Color color_b = new(0, 0, 0);
+                    Color top = index_t < buffer.Length ? buffer[index_t] : new Color(0, 0, 0);
+                    Color btm = index_b < buffer.Length ? buffer[index_b] : new Color(0, 0, 0);
 
-                    sb = sb.Append("\x1b[38;2;0;0;0m\x1b[48;2;0;0;0m");
-
-                    for (int x = 0; x < renderWidth; x++)
+                    if (color_t != top)
                     {
-                        int index_t = (2 * y * Width) + x;
-                        int index_b = index_t + Width;
-
-                        Color top = Buffer[index_t];
-                        Color btm = Buffer[index_b];
-
-                        if (color_t != top)
-                        {
-                            sb = sb.Append("\x1b[38;2;")
-                                .Append(top.R).Append(';')
-                                .Append(top.G).Append(';')
-                                .Append(top.B).Append('m');
-                            color_t = top;
-                        }
-
-                        if (color_b != btm)
-                        {
-                            sb = sb.Append("\x1b[48;2;")
-                                .Append(btm.R).Append(';')
-                                .Append(btm.G).Append(';')
-                                .Append(btm.B).Append('m');
-                            color_b = btm;
-                        }
-
-                        sb = sb.Append('▀');
+                        sb = sb.Append("\x1b[38;2;")
+                            .Append(top.R).Append(';')
+                            .Append(top.G).Append(';')
+                            .Append(top.B).Append('m');
+                        color_t = top;
                     }
 
-                    sb = sb.Append("\x1b[0m");
+                    if (color_b != btm)
+                    {
+                        sb = sb.Append("\x1b[48;2;")
+                            .Append(btm.R).Append(';')
+                            .Append(btm.G).Append(';')
+                            .Append(btm.B).Append('m');
+                        color_b = btm;
+                    }
 
-                    Console.SetCursorPosition((int)Position.X, (int)(Position.Y + y));
-                    Console.Write(sb.ToString());
+                    sb = sb.Append('▀');
                 }
 
+                sb = sb.Append("\x1b[0m");
 
-                Console.SetCursorPosition(0, 0);
+                Console.SetCursorPosition((int)position.X, (int)(Position.Y + y));
+                Console.Write(sb.ToString());
             }
+
+            Console.SetCursorPosition(0, 0);
         }
 
         public void Clear()
         {
             lock (_lock)
             {
-                Buffer = new Color[Width * Height];
                 Array.Fill(Buffer, new(0, 0, 0));
-
-                ZBuffer = new float[Width * Height];
                 Array.Fill(ZBuffer, float.MinValue);
             }
         }
