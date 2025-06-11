@@ -5,7 +5,7 @@ namespace Playground
 {
     public class Program
     {
-        public static Project Active { get; internal set; } = new Drawing.Projects.Test();
+        public static Project Active { get; internal set; } = new Drawing.Projects.ColorRing();
 
         public static void Main(string[] args)
         {
@@ -16,8 +16,10 @@ namespace Playground
             {
                 long delta = watch.ElapsedMilliseconds;
                 watch.Restart();
+                delta = delta == 0 ? 1 : delta;
                 Active.Update(delta);
             }
+
             Active.Finish();
         }
     }
