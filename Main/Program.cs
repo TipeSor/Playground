@@ -5,7 +5,7 @@ namespace Playground
 {
     public class Program
     {
-        public static Project Active { get; internal set; } = new ConsoleGame.Projects.TestGame();
+        public static Project Active { get; internal set; } = new RandomTests.Temp();
 
         public static void Main(string[] args)
         {
@@ -24,7 +24,7 @@ namespace Playground
         }
     }
 
-    public class Basic : Project
+    public class Empty : Project
     {
         public override void Start()
         {

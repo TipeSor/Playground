@@ -24,6 +24,7 @@ namespace Playground.InputManager
             Source?.Dispose();
             Source = null;
 
+            ReadingTask?.GetAwaiter().GetResult();
             ReadingTask = null;
         }
 

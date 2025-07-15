@@ -13,8 +13,8 @@ namespace Playground.Drawing
         public int Width => (int)Size.X;
         public int Height => (int)Size.Y;
 
-        public Vector2 Size { get; }
-        public Vector2 Position { get; }
+        public Vector2 Size { get; private set; }
+        public Vector2 Position { get; private set; }
 
 
         public ColorDisplay(int width, int height, int x = 0, int y = 0) :
@@ -55,11 +55,14 @@ namespace Playground.Drawing
             StringBuilder sb = new();
 
             int renderWidth = Math.Min(width, Console.WindowWidth - (int)position.X);
-            int renderHeight = Math.Min(height, Console.WindowHeight - (int)position.Y);
+            int renderHeight = Math.Min(height, (Console.WindowHeight * 2) - (int)position.Y);
+
+            int startX = (int)(position.X < 0 ? -position.X : 0);
+            int startY = (int)(position.Y < 0 ? -position.Y : 0);
 
             int rows = (renderHeight + 1) / 2;
 
-            for (int y = 0; y < rows; y++)
+            for (int y = startY; y < rows; y++)
             {
                 sb = sb.Clear();
 
@@ -68,13 +71,13 @@ namespace Playground.Drawing
 
                 sb = sb.Append("\x1b[38;2;0;0;0m\x1b[48;2;0;0;0m");
 
-                for (int x = 0; x < renderWidth; x++)
+                for (int x = startX; x < renderWidth; x++)
                 {
                     int index_t = (2 * y * width) + x;
                     int index_b = index_t + width;
 
                     Color top = index_t < buffer.Length ? buffer[index_t] : new Color(0, 0, 0);
-                    Color btm = index_b < buffer.Length ? buffer[index_b] : new Color(0, 0, 0);
+                    Color btm = index_b < buffer.Length ? buffer[index_b] : new Color(255, 0, 255);
 
                     if (color_t != top)
                     {
@@ -99,7 +102,7 @@ namespace Playground.Drawing
 
                 sb = sb.Append("\x1b[0m");
 
-                Console.SetCursorPosition((int)position.X, (int)(Position.Y + y));
+                Console.SetCursorPosition((int)Position.X + startX, (int)(Position.Y + y));
                 Console.Write(sb.ToString());
             }
 
@@ -138,6 +141,14 @@ namespace Playground.Drawing
                 if (ZBuffer[index] >= depth) return;
                 Buffer[index] = color;
                 ZBuffer[index] = depth;
+            }
+        }
+
+        public void MoveBuffer(Vector2 delta)
+        {
+            lock (_lock)
+            {
+                Position += delta;
             }
         }
     }

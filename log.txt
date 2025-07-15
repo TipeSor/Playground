@@ -1,0 +1,116 @@
+Shop:
+basic stone
+- stock: unlimited
+- price: 50x basic wood
+
+Inventory:
+basic wood:
+- total: 7500
+
+----------
+Trade: 2500x basic wood -> 50x basic stone
+
+Trade Status:
+- Status: succeded
+- Message: nothing
+
+Shop:
+basic stone
+- stock: unlimited
+- price: 50x basic wood
+basic wood
+- stock: 2500
+- price: none
+
+Inventory:
+basic stone:
+- total: 50
+basic wood:
+- total: 5000
+
+----------
+Crafter:
+- Input:
+- - basic stone 0
+- - basic wood 0
+- Output:
+- - basic glass 0
+
+Inventory:
+basic stone:
+- total: 50
+basic wood:
+- total: 5000
+
+----------
+Transfer: 150 basic stone From inventory to crafter
+Transfer Status:
+- Transfered: 50 basic stone From inventory to crafter
+- Status: succeded
+- Message: nothing
+
+Transfer: 150 basic wood From inventory to crafter
+Transfer Status:
+- Transfered: 150 basic wood From inventory to crafter
+- Status: succeded
+- Message: nothing
+
+Crafter:
+- Input:
+- - basic stone 50
+- - basic wood 150
+- Output:
+- - basic glass 0
+
+Inventory:
+basic stone:
+- total: 0
+basic wood:
+- total: 4850
+
+----------
+Craft: 
+- max basic glass
+
+Craft Status:
+- Used:
+- - 30x basic stone
+- - 150x basic wood
+- Created:
+- - 3x basic glass
+
+Crafter:
+- Input:
+- - basic stone 20
+- - basic wood 0
+- Output:
+- - basic glass 3
+
+Inventory:
+basic stone:
+- total: 0
+basic wood:
+- total: 4850
+
+----------
+Transfer: 150 basic glass From crafter to inventory
+Transfer Status:
+- Transfered: 3 basic glass From crafter to inventory
+- Status: succeded
+- Message: nothing
+
+Crafter:
+- Input:
+- - basic stone 20
+- - basic wood 0
+- Output:
+- - basic glass 0
+
+Inventory:
+basic glass:
+- total: 3
+basic stone:
+- total: 0
+basic wood:
+- total: 4850
+
