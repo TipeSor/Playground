@@ -1,17 +1,19 @@
+=== Shop setup ===
 Shop:
 basic stone
 - stock: unlimited
 - price: 50x basic wood
 
+=== Inventory setup ===
 Inventory:
 basic wood:
 - total: 7500
 
-----------
+=== Trade ===
 Trade: 2500x basic wood -> 50x basic stone
 
 Trade Status:
-- Status: succeded
+- Status: succeeded
 - Message: nothing
 
 Shop:
@@ -28,7 +30,15 @@ basic stone:
 basic wood:
 - total: 5000
 
-----------
+=== Crafter setup ===
+Crafter:
+- Input:
+- - basic stone 0
+- - basic wood 0
+- Output:
+- - basic glass 0
+
+=== Transfering items to crafter ===
 Crafter:
 - Input:
 - - basic stone 0
@@ -42,17 +52,16 @@ basic stone:
 basic wood:
 - total: 5000
 
-----------
-Transfer: 150 basic stone From inventory to crafter
+Transfer: 150 basic stone from `source` to `target`
 Transfer Status:
-- Transfered: 50 basic stone From inventory to crafter
-- Status: succeded
+- Transfered: 50 basic stone from `source` to `target`
+- Status: succeeded
 - Message: nothing
 
-Transfer: 150 basic wood From inventory to crafter
+Transfer: 150 basic wood from `source` to `target`
 Transfer Status:
-- Transfered: 150 basic wood From inventory to crafter
-- Status: succeded
+- Transfered: 150 basic wood from `source` to `target`
+- Status: succeeded
 - Message: nothing
 
 Crafter:
@@ -68,7 +77,7 @@ basic stone:
 basic wood:
 - total: 4850
 
-----------
+=== Crafting ===
 Craft: 
 - max basic glass
 
@@ -86,29 +95,21 @@ Crafter:
 - Output:
 - - basic glass 3
 
-Inventory:
-basic stone:
-- total: 0
-basic wood:
-- total: 4850
-
-----------
-Transfer: 150 basic glass From crafter to inventory
+=== Transfering items from crafter ===
+Transfer: 150 basic glass from `source` to `target`
 Transfer Status:
-- Transfered: 3 basic glass From crafter to inventory
-- Status: succeded
-- Message: nothing
+- Transfered: 0 basic glass from `source` to `target`
+- Status: failed
+- Message: Not enough items at source
 
 Crafter:
 - Input:
 - - basic stone 20
 - - basic wood 0
 - Output:
-- - basic glass 0
+- - basic glass 3
 
 Inventory:
-basic glass:
-- total: 3
 basic stone:
 - total: 0
 basic wood:
