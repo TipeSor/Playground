@@ -28,7 +28,10 @@ namespace Playground.Inventory.Core
         AddResult Add(IItemStack stack);
         SubtractResult Subtract(IItemStack stack);
         uint GetCount(Item item);
+    }
 
+    public interface ITransactional
+    {
         void BeginTransaction();
         void Commit();
         void Rollback();
@@ -38,18 +41,10 @@ namespace Playground.Inventory.Core
     #endregion
 
     #region Item Implementation
-    public readonly struct Item(string id, string name, uint maxAmount = uint.MaxValue) : IEquatable<Item>
+    public readonly record struct Item(string Id, string Name, uint MaxAmount)
     {
-        public string Id { get; } = id;
-        public string Name { get; } = name;
-        public uint MaxAmount { get; } = maxAmount == 0 ? uint.MaxValue : maxAmount;
-
-        public bool Equals(Item other) => Id == other.Id;
-        public override bool Equals(object? obj) => obj is Item other && Equals(other);
-        public override int GetHashCode() => Id.GetHashCode();
-
-        public static bool operator ==(Item left, Item right) => left.Equals(right);
-        public static bool operator !=(Item left, Item right) => !left.Equals(right);
+        public Item(string id, string name)
+            : this(id, name, uint.MaxValue) { }
 
         public override string ToString() => $"{Name} ({Id}) - Max {MaxAmount}";
     }
@@ -141,11 +136,17 @@ namespace Playground.Inventory.Core
             if (source == target)
                 return new TransferResult(0, true, "");
 
-            if (source.InTransaction)
-                return new TransferResult(0, false, "source in transaction");
+            if (source is not ITransactional Source)
+                return new TransferResult(0, false, "Source can't perform transactions");
 
-            if (target.InTransaction)
-                return new TransferResult(0, false, "target in transaction");
+            if (target is not ITransactional Target)
+                return new TransferResult(0, false, "Target can't perform transactions");
+
+            if (Source.InTransaction)
+                return new TransferResult(0, false, "Source in transaction");
+
+            if (Target.InTransaction)
+                return new TransferResult(0, false, "Target in transaction");
 
             uint available = source.GetCount(stack.Item);
             uint left = exact ? stack.Amount : Math.Min(available, stack.Amount);
@@ -153,8 +154,8 @@ namespace Playground.Inventory.Core
             if (available < left)
                 return new TransferResult(0, false, "Not enough items at source");
 
-            source.BeginTransaction();
-            target.BeginTransaction();
+            Source.BeginTransaction();
+            Target.BeginTransaction();
 
             OverflowStack temp = new OverflowStack(stack.Item, left);
 
@@ -166,14 +167,14 @@ namespace Playground.Inventory.Core
             if (exact && result1.Remaining != 0)
                 return Fail($"source failed to subtract");
 
-            source.Commit();
-            target.Commit();
+            Source.Commit();
+            Target.Commit();
             return new TransferResult(result1.Subtracted, true, "");
 
             TransferResult Fail(string msg)
             {
-                source.Rollback();
-                target.Rollback();
+                Source.Rollback();
+                Target.Rollback();
                 return new TransferResult(0, false, msg);
             }
         }
@@ -181,8 +182,8 @@ namespace Playground.Inventory.Core
         public static TradeResult Trade(
             IInventory tradee,
             IInventory trader,
-            IItemStack tradeeOffer,
-            IItemStack traderOffer)
+            IItemStack[] tradeeOffer,
+            IItemStack[] traderOffer)
         {
             ArgumentNullException.ThrowIfNull(tradee);
             ArgumentNullException.ThrowIfNull(trader);
@@ -192,49 +193,67 @@ namespace Playground.Inventory.Core
             if (tradee == trader)
                 return new TradeResult(false, "Can't trade with yourself");
 
-            if (tradee.InTransaction)
+            if (tradee is not ITransactional Tradee)
+                return new TradeResult(false, "Tradee can't perform transactions");
+
+            if (trader is not ITransactional Trader)
+                return new TradeResult(false, "Trader can't perform transactions");
+
+            if (Tradee.InTransaction)
                 return new TradeResult(false, "Tradee in transaction");
 
-            if (trader.InTransaction)
+            if (Trader.InTransaction)
                 return new TradeResult(false, "Trader in transaction");
 
-            uint temp1 = tradee.GetCount(traderOffer.Item);
-            if (temp1 < traderOffer.Amount)
-                return new TradeResult(false,
-                    $"Tradee didn't have enough items. ({temp1})/({traderOffer.Amount}) {traderOffer.Item}");
+            foreach (IItemStack stack in tradeeOffer)
+            {
+                uint temp1 = tradee.GetCount(stack.Item);
+                if (temp1 < stack.Amount)
+                    return new TradeResult(false,
+                        $"Tradee didn't have enough items. ({temp1})/({stack.Amount}) {stack.Item.Name}");
+            }
 
-            uint temp2 = trader.GetCount(tradeeOffer.Item);
-            if (temp2 < tradeeOffer.Amount)
-                return new TradeResult(false,
-                    $"Trader didn't have enough items. ({temp2})/({tradeeOffer.Amount}) {tradeeOffer.Item}");
+            foreach (IItemStack stack in traderOffer)
+            {
+                uint temp2 = trader.GetCount(stack.Item);
+                if (temp2 < stack.Amount)
+                    return new TradeResult(false,
+                        $"Trader didn't have enough items. ({temp2})/({stack.Amount}) {stack.Item.Name}");
+            }
 
-            tradee.BeginTransaction();
-            trader.BeginTransaction();
+            Tradee.BeginTransaction();
+            Trader.BeginTransaction();
 
-            SubtractResult result1 = tradee.Subtract(tradeeOffer);
-            if (result1.Remaining != 0)
-                return Fail("Failed to subtract tradee offer from tradee");
+            foreach (IItemStack stack in tradeeOffer)
+            {
+                SubtractResult result1 = tradee.Subtract(stack);
+                if (result1.Remaining != 0)
+                    return Fail("Failed to subtract tradee offer from tradee");
 
-            SubtractResult result2 = trader.Subtract(traderOffer);
-            if (result2.Remaining != 0)
-                return Fail("Failed to subtract trader offer from trader");
+                AddResult result2 = trader.Add(stack);
+                if (result2.Remaining != 0)
+                    return Fail("Failed to add tradee offer to trader");
+            }
 
-            AddResult result3 = tradee.Add(traderOffer);
-            if (result3.Remaining != 0)
-                return Fail("Failed to add trader offer to tradee");
+            foreach (IItemStack stack in traderOffer)
+            {
+                SubtractResult result1 = trader.Subtract(stack);
+                if (result1.Remaining != 0)
+                    return Fail("Failed to subtract trader offer from trader");
 
-            AddResult result4 = trader.Add(tradeeOffer);
-            if (result4.Remaining != 0)
-                return Fail("Failed to add tradee offer to trader");
+                AddResult result2 = tradee.Add(stack);
+                if (result2.Remaining != 0)
+                    return Fail("Failed to add trader offer to tradee");
+            }
 
-            tradee.Commit();
-            trader.Commit();
+            Tradee.Commit();
+            Trader.Commit();
             return new TradeResult(true, "");
 
             TradeResult Fail(string msg)
             {
-                tradee.Rollback();
-                trader.Rollback();
+                Tradee.Rollback();
+                Trader.Rollback();
                 return new TradeResult(false, msg);
             }
         }

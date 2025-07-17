@@ -4,12 +4,19 @@ using Playground.Inventory.Core;
 
 namespace Playground.Inventory.Crafter
 {
-    #region Records
+    #region Interfaces and Records
+    public interface ICrafter
+    {
+        CraftingRecipe? ActiveRecipe { get; }
+        void SetRecipe(CraftingRecipe recipe);
+        CraftResult Craft(uint amount);
+    }
+
     public record CraftResult(uint Crafted, bool Success, string Message);
     public record CraftingRecipe((Item Item, uint Amount)[] Input, (Item Item, uint Amount)[] Output);
     #endregion
 
-    public class Crafter()
+    public class Crafter() : ICrafter
     {
         #region Properties
         public CrafterInventory Inventory { get; } = new();

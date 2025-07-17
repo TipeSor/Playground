@@ -16,6 +16,7 @@ namespace Playground.RandomTests
 
             BasicShop shop;
             BasicInventory inventory;
+            TradeEntry trade;
             Crafter crafter;
             CraftingRecipe recipe;
 
@@ -23,7 +24,14 @@ namespace Playground.RandomTests
             {
                 shop = new BasicShop();
                 shop.Add(new UnlimitedStack(stone));
-                shop.AddTrade(stone, new CostEntry(wood, 50));
+
+                trade = new TradeEntry(
+                    "trade.glass",
+                    [(wood, 50)],
+                    [(stone, 10)]
+                );
+
+                shop.AddTrade(trade);
 
                 Console.WriteLine(shop);
             }
@@ -39,9 +47,8 @@ namespace Playground.RandomTests
 
             WriteTitle("Trade");
             {
-                LoggedTrade(inventory, shop, stone, 50);
+                LoggedTrade(inventory, shop, trade, 50);
 
-                Console.WriteLine(shop);
                 Console.WriteLine(inventory);
             }
 
@@ -54,7 +61,6 @@ namespace Playground.RandomTests
                 );
 
                 crafter.SetRecipe(recipe);
-
                 Console.WriteLine(crafter);
             }
 
@@ -79,7 +85,7 @@ namespace Playground.RandomTests
 
             WriteTitle("Transfering items from crafter");
             {
-                LoggedTransfer(crafter.Inventory, inventory, new ItemStack(recipe.Output[0].Item, 150));
+                LoggedTransfer(crafter.Inventory, inventory, new ItemStack(recipe.Output[0].Item, 150), false);
 
                 Console.WriteLine(crafter);
                 Console.WriteLine(inventory);
@@ -88,7 +94,7 @@ namespace Playground.RandomTests
 
         public static void LoggedTransfer(IInventory source, IInventory target, IItemStack stack, bool exact = true)
         {
-            Console.WriteLine($"Transfer: {stack.Amount} {stack.Item.Name} from `{nameof(source)}` to `{nameof(target)}`");
+            Console.WriteLine($"Transfer: {stack.Amount} {stack.Item.Name} from `{nameof(source)}` to `{nameof(target)}` (exact: {exact})");
             TransferResult result = InventoryUtil.Transfer(source, target, stack, exact);
             Console.WriteLine($"Transfer Status:");
             Console.WriteLine($"- Transfered: {result.Amount} {stack.Item.Name} from `{nameof(source)}` to `{nameof(target)}`");
@@ -97,16 +103,27 @@ namespace Playground.RandomTests
             Console.WriteLine();
         }
 
-        public static void LoggedTrade(IInventory buyer, IShop seller, Item item, uint amount)
+        public static void LoggedTrade(IInventory buyer, IShop seller, TradeEntry trade, uint multipler)
         {
-            if (!seller.Trades.TryGetValue(item, out CostEntry? costEntry))
-            { Console.WriteLine("Trade not found."); return; }
+            if (!seller.TryCalculateCost(trade, multipler, out IItemStack[] totalCost))
+            { Console.WriteLine("Failed to calculate costs"); return; }
 
-            Item currency = costEntry.Currency;
-            uint cost = costEntry.Amount * amount;
+            if (!seller.TryCalculateReward(trade, multipler, out IItemStack[] totalReward))
+            { Console.WriteLine("Failed to calculate rewards"); return; }
 
-            Console.WriteLine($"Trade: {cost}x {currency.Name} -> {amount}x {item.Name}\n");
-            TradeResult result = seller.Trade(buyer, item, amount);
+            Console.WriteLine("  - Cost:");
+            foreach (IItemStack cost in totalCost)
+            {
+                Console.WriteLine($"    - {cost.Amount}x {cost.Item.Name}");
+            }
+            Console.WriteLine("  - Reward:");
+            foreach (IItemStack reward in totalReward)
+            {
+                Console.WriteLine($"    - {reward.Amount}x {reward.Item.Name}");
+            }
+            Console.WriteLine();
+
+            TradeResult result = seller.Trade(buyer, trade, multipler);
 
             Console.WriteLine($"Trade Status:");
             Console.WriteLine($"- Status: {(result.Success ? "succeeded" : "failed")}");
@@ -115,7 +132,7 @@ namespace Playground.RandomTests
 
         }
 
-        public static void LoggedCrafting(Crafter crafter, uint amount)
+        public static void LoggedCrafting(ICrafter crafter, uint amount)
         {
             if (crafter.ActiveRecipe == null) { Console.WriteLine("No recipe selected"); return; }
 

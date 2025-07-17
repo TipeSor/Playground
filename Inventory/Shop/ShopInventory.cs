@@ -4,7 +4,7 @@ using Playground.Inventory.Core;
 
 namespace Playground.Inventory.Shop
 {
-    public class ShopInventory : IInventory
+    public class ShopInventory : IInventory, ITransactional
     {
         #region Fields
         private Dictionary<Item, OverflowStack> _committedStocks = [];
@@ -71,20 +71,15 @@ namespace Playground.Inventory.Shop
         {
             if (!InTransaction) return;
             _committedStocks = CloneStocks(_workingStocks);
-            ClearWorkingState();
+            _workingStocks.Clear();
             InTransaction = false;
         }
 
         public void Rollback()
         {
             if (!InTransaction) return;
-            ClearWorkingState();
-            InTransaction = false;
-        }
-
-        private void ClearWorkingState()
-        {
             _workingStocks.Clear();
+            InTransaction = false;
         }
         #endregion
 

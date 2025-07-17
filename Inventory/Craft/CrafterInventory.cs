@@ -4,7 +4,7 @@ using Playground.Inventory.Core;
 
 namespace Playground.Inventory.Crafter
 {
-    public class CrafterInventory : IInventory
+    public class CrafterInventory : IInventory, ITransactional
     {
         #region Fields
         private IItemStack[] _committedInput = [];

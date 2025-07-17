@@ -4,7 +4,7 @@ using Playground.Inventory.Core;
 
 namespace Playground.Inventory
 {
-    public class BasicInventory : IInventory
+    public class BasicInventory : IInventory, ITransactional
     {
         #region Fields
         private Dictionary<Item, List<ItemStack>> _committedStacks = [];
