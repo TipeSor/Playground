@@ -26,7 +26,7 @@ namespace Playground.RandomTests
                 shop.Add(new UnlimitedStack(stone));
 
                 trade = new TradeEntry(
-                    "trade.glass",
+                    "trade.stone",
                     [(wood, 50)],
                     [(stone, 10)]
                 );
