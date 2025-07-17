@@ -86,7 +86,7 @@ namespace Playground.Inventory.Core
 
         public string Name => Item.Name;
         public uint MaxAmount => uint.MaxValue;
-        public bool IsFull => false;
+        public bool IsFull => Amount == MaxAmount;
 
         public AddResult Add(uint amount)
         {
